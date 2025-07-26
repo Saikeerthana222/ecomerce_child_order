@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>E-Commerce Website</title>
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        if (Notification.permission !== "granted") {
+            Notification.requestPermission();
+        }
+    });
+</script>
+
+
+<div id="notification-dropdown" style="display: none; position: absolute; top: 40px; right: 0; width: 250px; background: white; border: 1px solid #ddd; box-shadow: 2px 2px 10px rgba(0,0,0,0.1);">
+  <div id="notification-list" style="max-height: 200px; overflow-y: auto;"></div>
+  <button id="clear-all" style="width: 100%; padding: 10px; background: #ff4d4d; color: white; border: none; cursor: pointer; display: none;">Clear All</button>
+</div>
+
+
+
+
+
+
+  <style>
+    
+    /* General Styles */
+    body {
+      font-family: Arial, sans-serif;
+      background: url("Photos/bg2.jpeg"); /* Placeholder for background with icons */
+      background-size: cover;
+      background-attachment: fixed;
+      margin: 0;
+      padding: 0;
+    }
+    
+    /* Animated background icons */
+    @keyframes moveIcons {
+      0% { transform: translateY(0); }
+      50% { transform: translateY(10px); }
+      100% { transform: translateY(0); }
+    }
+    
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: url("Photos/bg2.jpeg") repeat;
+      opacity: 0.1;
+      animation: moveIcons 5s infinite ease-in-out;
+      z-index: -1;
+    }
+    
+    /* Top Header */
+    .top-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 20px;
+      background: #2c3e50;
+      color: white;
+    }
+    
+    .site-name {
+      font-size: 24px;
+    }
+    
+    .search-bar {
+      flex: 1;
+      margin: 0 80px;
+      padding: 8px;
+      border-radius: 5px;
+      border: none;
+    }
+    
+    .login-btn, .sign-btn {
+      background: red;
+      text-decoration: none;
+      padding: 8px 12px;
+      color: white;
+      border-radius: 10px;
+    }
+    
+    .sign-btn {
+      margin-left: 10px;
+    }
+    
+    .auth-buttons button {
+      background: #e74c3c;
+      border: none;
+      padding: 8px 12px;
+      color: white;
+      cursor: pointer;
+      margin-left: 10px;
+      border-radius: 5px;
+    }
+    
+    /* Main Header with Product Categories */
+    .main-header {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 20px;
+      background: #34495e;
+      color: white;
+      position: relative; /* Required for positioning the slide box */
+    }
+    
+    .product-types {
+      position: relative;
+      cursor: pointer;
+    }
+    
+    .slide-box {
+  position: absolute;
+  top: 100%;
+  left: -220px; /* Start completely off-screen */
+  background: white;
+  color: black;
+  list-style: none;
+  padding: 10px;
+  border-radius: 5px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  width: 200px;
+  transition: left 0.4s ease-in-out; /* Smooth slide effect */
+  z-index: 10;
+  display: block; /* Always exists, just hidden */
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* When active, slide in */
+.slide-box.active {
+  left: 0;
+  opacity: 1;
+  visibility: visible;
+}
+    
+    .slide-box li {
+      padding: 8px 0;
+      border-bottom: 1px solid #ddd;
+    }
+    
+    .slide-box li:last-child {
+      border-bottom: none;
+    }
+    
+    .slide-box li a {
+      color: black;
+      text-decoration: none;
+      display: block;
+    }
+    
+    .slide-box li a:hover {
+      color: #e74c3c;
+    }
+    
+    .categories {
+      display: flex;
+      gap: 20px;
+      list-style: none;
+    }
+    
+    .category {
+      cursor: pointer;
+    }
+    
+    /* Slideshow */
+    .slideshow {
+      width: 100%;
+      overflow: hidden;
+    }
+    
+    .slides img {
+      width: 100%;
+      display: none;
+    }
+    
+    /* Scrolling Product Sections */
+    .product-section {
+      margin-bottom: 40px;
+    }
+    
+    .product-section h2 {
+      padding: 20px;
+      font-size: 1.5em;
+      margin: 0;
+    }
+    
+    .scrolling-wrapper {
+      display: flex;
+      overflow-x: auto;
+      gap: 20px;
+      padding: 0 20px 20px 20px;
+    }
+    
+    .product {
+      min-width: 200px;
+      flex: 0 0 auto;
+      text-align: center;
+      padding: 10px;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      border: 1px solid #ddd; /* Thin line separator */
+    }
+    
+    .product img {
+      width: 100%;
+      height: auto;
+    }
+    
+    /* Cart & Checkout */
+    
+    .cart-btn {
+      display: block; /* Makes it take the full width of its parent */
+      padding: 10px 15px;
+      margin-top: 10px; /* Ensures spacing from the amount */
+      background: #27ae60;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
+      text-decoration:none;
+}
+
+.cart-btn:hover {
+      background: #219150;
+}
+  </style>
+</head>
+<body>
+  <!-- Top Header -->
+  <header class="top-header">
+    <h1 class="site-name">ShopEase</h1>
+    <input type="text" class="search-bar" placeholder="Search for products...">
+    <div class="auth-buttons">
+      <a href="login.html" class="login-btn">Login</a>
+      <a href="cart.html" class="sign-btn">Cart</a>
+    </div>
+  </header>
+  
+  <!-- Main Header with Product Categories -->
+  <nav class="main-header">
+    <div class="product-types">
+      <span id="product-types-btn">Product Types &#9662;</span>
+      <ul class="slide-box">
+        <li><a href="#">Mobiles</a></li>
+        <li><a href="#">Shoes</a></li>
+        <li><a href="#">Clothing</a></li>
+        <li><a href="#">Cameras</a></li>
+      </ul>
+    </div>
+    <ul class="categories">
+      <li class="category">Electronics</li>
+      <li class="category">Fashion</li>
+      <li class="category">Home & Kitchen</li>
+    </ul>
+  </nav>
+  
+  <!-- Main Content -->
+  <main>
+    <!-- Slideshow Section -->
+    <section class="slideshow">
+      <div class="slides">
+        <img src="Photos/back5.png" alt="Deal 1">
+        <img src="Photos/back2.png" alt="Deal 2">
+        <img src="Photos/back3.png" alt="Deal 3">
+      </div>
+    </section>
+
+    <!-- Clothing Section -->
+    <section class="product-section">
+      <h2>Clothing</h2>
+      <div class="scrolling-wrapper">
+        <div class="product">
+          <img src="Photos/cloth1.jpeg" alt="Clothing Product 1">
+          <p>Black Hoodie</p>
+          <span>$150</span>
+          <a href="cart.html" class="cart-btn">Add to Cart</a>
+        </div>
+        <div class="product">
+          <img src="Photos/cloth2.jpeg" alt="Clothing Product 2">
+          <p>Black Jacket</p>
+          <span>$200</span>
+          <a href="cart.html" class="cart-btn">Add to Cart</a>
+        </div>
+        <div class="product">
+          <img src="Photos/cloth3.jpeg" alt="Clothing Product 2">
+          <p>Biege Cargo</p>
+          <span>$90</span>
+          <a href="cart.html" class="cart-btn">Add to Cart</a>
+        </div>
+        <div class="product">
+          <img src="Photos/cloth4.jpeg" alt="Clothing Product 2">
+          <p>Black Trouser</p>
+          <span>$60</span>
+          <a href="cart.html" class="cart-btn">Add to Cart</a>
+        </div>
+        <div class="product">
+          <img src="Photos/cloth5.jpeg" alt="Clothing Product 2">
+          <p>White Polo T-Shirt</p>
+          <span>$120</span>
+          <a href="cart.html" class="cart-btn">Add to Cart</a>
+        </div>
+        <div class="product">
+          <img src="Photos/cloth6.jpeg" alt="Clothing Product 2">
+          <p>Green Zipper T-Shirt</p>
+          <span>$140</span>
+          <a href="cart.html" class="cart-btn">Add to Cart</a>
+        </div>
+
+        <!-- Add more clothing products as needed -->
+      </div>
+    </section>
+
+    <!-- Shoes Section -->
+    <section class="product-section">
+      <h2>Shoes</h2>
+      <div class="scrolling-wrapper">
+        <div class="product">
+          <img src="Photos/shoe1.jpeg" alt="Shoes Product 1" style="margin-bottom:50px;">
+          <p>Multi-Color Sneakers</p>
+          <span>$120</span>
+          <a href="cart.html" class="cart-btn">Add to Cart</a>
+        </div>
+        <div class="product">
+          <img src="Photos/shoe2.jpeg" alt="Shoes Product 2" style="margin-bottom:15px;">
+          <p>Air Jordan Black</p>
+          <span>$500</span>
+          <a href="cart.html" class="cart-btn">Add to Cart</a>
+        </div>
+        <div class="product">
+          <img src="Photos/shoe3.jpeg" alt="Shoes Product 2" style="margin-bottom:160px;">
+          <p>Oxford Black Formal Shoes</p>
+          <span>$150</span>
+          <a href="cart.html" class="cart-btn">Add to Cart</a>
+        </div>
+        <div class="product">
+          <img src="Photos/shoe4.jpeg" alt="Shoes Product 2" style="margin-bottom:100px;">
+          <p>Athelete Shoes</p>
+          <span>$50</span>
+          <a href="cart.html" class="cart-btn">Add to Cart</a>
+        </div>
+        <div class="product">
+          <img src="Photos/shoe5.jpeg" alt="Shoes Product 2" style="margin-bottom:3px;">
+          <p>Bata Brown Formal Shoes</p>
+          <span>$70</span>
+          <a href="cart.html" class="cart-btn">Add to Cart</a>
+        </div>
+        <div class="product">
+          <img src="Photos/shoe7.jpeg" alt="Shoes Product 2">
+          <p>Black Foam Shoes</p>
+          <span>$90</span>
+          <a href="cart.html" class="cart-btn">Add to Cart</a>
+        </div>
+        <!-- Add more shoes products as needed -->
+      </div>
+    </section>
+
+    <!-- Electronics Section -->
+    <section class="product-section">
+      <h2>Electronics</h2>
+      <div class="scrolling-wrapper">
+        <div class="product">
+        <a href="product1.html">
+    <img src="Photos/product1.jpeg" alt="Electronics Product 2" style="margin-bottom:70px;">
+  </a>
+  <p>IPhone 16 Pro Max</p>
+  <span>$1000</span>
+  <a href="cart.html" class="cart-btn">Add to Cart</a>
+</div>
+        <div class="product">
+          <img src="Photos/product2.jpeg" alt="Electronics Product 2" style="margin-bottom:70px;">
+          <p>Apple airpods pro</p>
+          <span>$350</span>
+          <a href="cart.html" class="cart-btn">Add to Cart</a>
+        </div>
+        <div class="product">
+          <img src="Photos/product4.jpeg" alt="Electronics Product 2" style="margin-bottom:110px;">
+          <p>Security Camera</p>
+          <span>$50</span>
+          <a href="cart.html" class="cart-btn">Add to Cart</a>
+        </div>
+        <div class="product">
+          <img src="Photos/product5.jpeg" alt="Electronics Product 2" style="margin-bottom:12px;">
+          <p>Oneplus Headphones</p>
+          <span>$250</span>
+          <a href="cart.html" class="cart-btn">Add to Cart</a>
+        </div>
+        <div class="product">
+          <img src="Photos/product6.jpeg" alt="Electronics Product 2" style="margin-bottom:170px;">
+          <p>iMac M3</p>
+          <span>$1500</span>
+          <a href="cart.html" class="cart-btn">Add to Cart</a>
+        </div>
+        <div class="product">
+          <img src="Photos/product7.jpeg" alt="Electronics Product 2" style="margin-bottom:60px;">
+          <p>Macbook Air M2 </p>
+          
+          <span>$1000</span>
+          <a href="cart.html" class="cart-btn">Add to Cart</a>
+        </div>
+        <div class="product">
+          <img src="Photos/product8.jpeg" alt="Electronics Product 2" style="margin-bottom:73px;">
+          <p>Canon DLSR Camera</p>
+          <span>$500</span>
+          <a href="cart.html" class="cart-btn">Add to Cart</a>
+        </div>
+        <div class="product">
+          <img src="Photos/product9.jpeg" alt="Electronics Product 2">
+          <p>iWatch</p>
+          <span>$670</span>
+          <a href="cart.html" class="cart-btn">Add to Cart</a>
+        </div>
+        <!-- Add more electronics products as needed -->
+      </div>
+    </section>
+  </main>
+  
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Search functionality
+        const searchBar = document.querySelector(".search-bar");
+        searchBar.addEventListener("input", function () {
+            let query = searchBar.value.toLowerCase();
+            let products = document.querySelectorAll(".product");
+
+            products.forEach(product => {
+                let productName = product.querySelector("p").innerText.toLowerCase();
+                if (productName.includes(query)) {
+                    product.style.display = "block";  // Show matching products
+                } else {
+                    product.style.display = "none";   // Hide non-matching products
+                }
+            });
+        });
+
+        // Slideshow functionality
+        let slideIndex = 0;
+        const slides = document.querySelectorAll(".slides img");
+
+        function showSlides() {
+            slides.forEach(slide => slide.style.display = "none");
+            slideIndex++;
+            if (slideIndex > slides.length) { slideIndex = 1; }
+            slides[slideIndex - 1].style.display = "block";
+            setTimeout(showSlides, 3000);
+        }
+        showSlides();
+
+        // Slide box functionality
+        const productTypesBtn = document.getElementById("product-types-btn");
+        const slideBox = document.querySelector(".slide-box");
+
+        productTypesBtn.addEventListener("click", function (event) {
+            event.stopPropagation();
+            slideBox.classList.toggle("active");
+        });
+
+        document.addEventListener("click", function () {
+            slideBox.classList.remove("active");
+        });
+
+        slideBox.addEventListener("click", function (event) {
+            event.stopPropagation();
+        });
+
+        slideBox.querySelectorAll("a").forEach(link => {
+            link.addEventListener("click", function () {
+                slideBox.classList.remove("active");
+            });
+        });
+
+        // "Add to Cart" functionality
+        document.querySelectorAll(".cart-btn").forEach(button => {
+            button.addEventListener("click", function(event) {
+                event.preventDefault();
+
+                let product = this.closest(".product");
+                let productName = product.querySelector("p").innerText;
+                let productPrice = product.querySelector("span").innerText.replace("$", "");
+                let productImage = product.querySelector("img").src;
+
+                let cart = JSON.parse(localStorage.getItem("cart")) || [];
+
+                let existingProduct = cart.find(item => item.name === productName);
+
+                if (existingProduct) {
+                    existingProduct.quantity += 1;
+                } else {
+                    cart.push({ name: productName, price: parseFloat(productPrice), image: productImage, quantity: 1 });
+                }
+
+                localStorage.setItem("cart", JSON.stringify(cart));
+                alert("Added to cart!");
+
+                // Redirect to cart.html after adding item
+                window.location.href = "cart.html";
+            });
+        });
+    });
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js')
+    .then(reg => console.log("Service Worker Registered", reg))
+    .catch(err => console.log("Service Worker Registration Failed", err));
+}
+</script>
+<script>
+function sendNotification(title, body, url) {
+    if (Notification.permission === "granted") {
+        navigator.serviceWorker.ready.then(registration => {
+            registration.showNotification(title, {
+                body: body,
+                icon: "/icons/notification-icon.png",
+                data: { url: url }
+            });
+        });
+    } else {
+        Notification.requestPermission().then(permission => {
+            if (permission === "granted") {
+                sendNotification(title, body, url);
+            }
+        });
+    }
+}
+
+// Example: Show notification when an order is placed
+function orderPlaced() {
+    sendNotification("Order Placed", "Your order has been successfully placed!", "/order-details");
+}
+
+// Example: Show notification when payment is cancelled
+function paymentCancelled() {
+    sendNotification("Payment Cancelled", "Payment failed due to multiple authentication failures.", "/cart");
+}
+</script>
+<script>
+    // Register Service Worker
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js')
+        .then(reg => {
+            console.log("Service Worker Registered", reg);
+
+            // Request push notification subscription
+            return reg.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: "YOUR_PUBLIC_VAPID_KEY"
+            });
+        })
+        .then(subscription => {
+            console.log("Push Subscription:", subscription);
+
+            // Send subscription to backend
+            fetch("http://localhost:5000/subscribe", {
+                method: "POST",
+                body: JSON.stringify(subscription),
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            });
+        })
+        .catch(err => console.log("Service Worker Registration Failed", err));
+    }
+
+    // Send a push notification
+    function sendOrderNotification() {
+        fetch("http://localhost:5000/send-notification", {
+            method: "POST",
+            body: JSON.stringify({
+                title: "Order Placed",
+                body: "Your order has been successfully placed!",
+                url: "/order-details"
+            }),
+            headers: {
+                "Content-Type": "application/json"
+            }
+        });
+    }
+
+    function sendPaymentCancelledNotification() {
+        fetch("http://localhost:5000/send-notification", {
+            method: "POST",
+            body: JSON.stringify({
+                title: "Payment Cancelled",
+                body: "Payment failed due to multiple authentication failures.",
+                url: "/cart"
+            }),
+            headers: {
+                "Content-Type": "application/json"
+            }
+        });
+    }
+</script>
+
+
+</body>
+</html>

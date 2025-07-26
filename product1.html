@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        .container {
+            display: flex;
+            max-width: 1400px;
+            margin:auto;
+            background: white;
+            padding: 20px;
+        }
+        .left-section {
+            flex: 1;
+            text-align: center;
+        }
+        .product-image {
+            width: 100%;
+            max-width: 400px;
+        }
+        .right-section {
+            flex: 2;
+            padding-left: 20px;
+        }
+        .thin-line {
+            border: none;
+            height: 1px;
+            background: #ccc;
+            margin: 10px 0;
+        }
+        .price {
+            font-size: 24px;
+            color: #e60000;
+        }
+        .old-price {
+            text-decoration: line-through;
+            color: #888;
+            font-size: 18px;
+        }
+        .offer-box {
+            background: #fff3cd;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .add-to-cart, .buy-now {
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+            transition: 0.3s;
+        }
+        .add-to-cart {
+            background: #ffcc00;
+        }
+        .buy-now {
+            background: #ff6600;
+            color: white;
+        }
+        .add-to-cart:hover, .buy-now:hover {
+            opacity: 0.8;
+        }
+        .suggested-products {
+            text-align: center;
+            margin-top: 20px;
+            background: white;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="left-section">
+            <img src="Photos/product1.jpeg" alt="Product Image" class="product-image">
+        </div>
+        <div class="right-section">
+            <div class="product-info">
+                <h1>IPhone 16 Pro Max(12GB RAM, 256GB Storage A18 chip)</h1>
+                <p>Visit the Istore</p>
+            </div>
+            <hr class="thin-line">  
+            <div class="price-section">
+                <p class="price">₹42,998 <span class="old-price">₹44,999</span></p>
+                <p class="offer">Limited time deal: Save 4%</p>
+                <button  class="add-to-cart" onclick="addToCart()">Add to Cart</button>
+                <button class="buy-now" onclick="buyNow()">Buy Now</button>
+            </div>
+            <hr class="thin-line">  
+            <div class="offers-section">
+                <div class="offer-box">No Cost EMI available</div>
+                <div class="offer-box">Bank Offer: Up to ₹3,000 off</div>
+                <div class="offer-box">Cashback: ₹1,289.94 on Amazon Pay</div>
+            </div>
+            <hr class="thin-line">  
+            <div class="description-section">
+                <h2>Product Details</h2>
+                <p>Detailed description of the product goes here...Detailed description of the product goes here...Detailed description of the product goes here...Detailed description of the product goes here...Detailed description of the product goes here...Detailed description of the product goes here...Detailed description of the product goes here...Detailed description of the product goes here...
+                    Detailed description of the product goes here...Detailed description of the product goes here...Detailed description of the product goes here...Detailed description of the product goes here...Detailed description of the product goes here...Detailed description of the product goes here...Detailed description of the product goes here...Detailed description of the product goes here...Detailed description of the product goes here...Detailed description of the product goes here...
+                </p>
+            </div>
+            <hr class="thin-line">  
+            <div class="review-section">
+                <h2>Customer Reviews</h2>
+                <p>Reviews and ratings will be displayed here...
+                    Detailed description of the product goes here...Detailed description of the product goes here...Detailed description of the product goes here...Detailed description of the product goes here...Detailed description of the product goes here...Detailed description of the product goes here...Detailed description of the product goes here...Detailed description of the product goes here...
+                    Detailed description of the product goes here...Detailed description of the product goes here...Detailed description of the product goes here...Detailed description of the product goes here...Detailed description of the product goes here...Detailed description of the product goes here...Detailed description of the product goes here...Detailed description of the product goes here...Detailed description of the product goes here...Detailed description of the product goes here...
+                    Detailed description of the product goes here...Detailed description of the product goes here...Detailed description of the product goes here...Detailed description of the product goes here...Detailed description of the product goes here...Detailed description of the product goes here...Detailed description of the product goes here...Detailed description of the product goes here...
+                    Detailed description of the product goes here...Detailed description of the product goes here...Detailed description of the product goes here...Detailed description of the product goes here...Detailed description of the product goes here...Detailed description of the product goes here...Detailed description of the product goes here...Detailed description of the product goes here...Detailed description of the product goes here...Detailed description of the product goes here...
+                
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="suggested-products">
+        <h2>Suggested Products</h2>
+        <div class="product-list">More products...</div>
+    </div>
+    <script>
+        function addToCart() {
+            alert("Item added to cart!");
+            window.location.href = "cart.html";
+
+        }
+        function buyNow() {
+            window.location.href = "authenticate.html";
+        }
+        // Function to add a product dynamically
+document.querySelectorAll(".add-to-cart").forEach(button => {
+            button.addEventListener("click", function(event) {
+                event.preventDefault();
+
+                let product = this.closest(".left-section");
+                let productName = product.querySelector("p").innerText;
+                let productPrice = product.querySelector("span").innerText.replace("$", "");
+                let productImage = product.querySelector("img").src;
+
+                let cart = JSON.parse(localStorage.getItem("cart")) || [];
+
+                let existingProduct = cart.find(item => item.name === productName);
+
+                if (existingProduct) {
+                    existingProduct.quantity += 1;
+                } else {
+                    cart.push({ name: productName, price: parseFloat(productPrice), image: productImage, quantity: 1 });
+                }
+
+                localStorage.setItem("cart", JSON.stringify(cart));
+                alert("Added to cart!");
+
+                // Redirect to cart.html after adding item
+                window.location.href = "cart.html";
+            });
+        });
+    </script>
+</body>
+</html>

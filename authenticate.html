@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirm Order</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background: white;
+            padding: 20px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            width: 350px;
+            text-align: center;
+        }
+
+        h2 {
+            margin-bottom: 15px;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            text-align: left;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .required {
+            color: red;
+        }
+
+        input {
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        button {
+            padding: 10px;
+            background: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+
+        button:disabled {
+            background: gray;
+            cursor: not-allowed;
+        }
+
+        /* Toast Notification Styles */
+        .toast {
+            visibility: hidden;
+            min-width: 250px;
+            background: #333;
+            color: white;
+            text-align: center;
+            border-radius: 5px;
+            padding: 10px;
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+        }
+
+        .toast.show {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .toast.success {
+            background: #28a745;
+        }
+
+        .toast.error {
+            background: #dc3545;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Confirm Your Order</h2>
+
+        <form id="confirmOrderForm">
+            <label for="email">Enter Your Email <span class="required">*</span></label>
+            <input type="email" id="email" name="email" required>
+
+            <label>Fingerprint Authentication <span class="required">*</span></label>
+            <input type="hidden" id="fingerprintData" name="fingerprintData">
+            <button type="button" id="scanFingerprint">Scan Fingerprint</button>
+            <p id="fingerprintStatus">Not Scanned</p>
+
+            <button type="button" id="usePasskey">Use Passkey Instead</button>
+            <input type="password" id="passkeyInput" placeholder="Enter Passkey" style="display: none;">
+            <button type="submit" id="confirmOrder" disabled>Confirm Order</button>
+        </form>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const fingerprintBtn = document.getElementById("scanFingerprint");
+            const fingerprintStatus = document.getElementById("fingerprintStatus");
+            const confirmOrderBtn = document.getElementById("confirmOrder");
+            const fingerprintDataInput = document.getElementById("fingerprintData");
+            const usePasskeyBtn = document.getElementById("usePasskey");
+            const passkeyInput = document.getElementById("passkeyInput");
+            const form = document.getElementById("confirmOrderForm");
+            const toast = document.getElementById("toast");
+
+            let fingerprintScanned = false;
+
+            // Function to show toast notification
+            function showToast(message, type = "success") {
+                toast.innerText = message;
+                toast.className = `toast show ${type}`;
+                setTimeout(() => {
+                    toast.className = toast.className.replace("show", "");
+                }, 3000);
+            }
+
+            // Fingerprint authentication using WebAuthn API
+            fingerprintBtn.addEventListener("click", async function () {
+                if (!window.PublicKeyCredential) {
+                    showToast("Fingerprint authentication not supported!", "error");
+                    return;
+                }
+
+                try {
+                    const credential = await navigator.credentials.create({
+                        publicKey: {
+                            challenge: new Uint8Array(32),
+                            rp: { name: "E-Commerce Site" },
+                            user: { id: new Uint8Array(16), name: "user@example.com", displayName: "User" },
+                            pubKeyCredParams: [{ alg: -7, type: "public-key" }],
+                            authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required" },
+                            timeout: 60000,
+                        },
+                    });
+
+                    if (credential) {
+                        fingerprintScanned = true;
+                        fingerprintStatus.innerText = "Fingerprint Scanned ✅";
+                        fingerprintStatus.style.color = "green";
+                        fingerprintDataInput.value = btoa(JSON.stringify(credential));
+
+                        showToast("Fingerprint authentication successful!", "success");
+                    }
+                } catch (error) {
+                    fingerprintStatus.innerText = "Fingerprint Scan Failed ❌";
+                    fingerprintStatus.style.color = "red";
+                    fingerprintScanned = false;
+
+                    showToast("Fingerprint authentication failed!", "error");
+                }
+
+                toggleConfirmOrderButton();
+            });
+
+            // Toggle confirm order button
+            function toggleConfirmOrderButton() {
+                confirmOrderBtn.disabled = !fingerprintScanned && !passkeyInput.value;
+            }
+
+            // Handle passkey input
+            usePasskeyBtn.addEventListener("click", function () {
+                passkeyInput.style.display = "block";
+                passkeyInput.focus();
+            });
+
+            passkeyInput.addEventListener("input", function () {
+                const correctPasskey = "123456"; // Example passkey (replace with secure check)
+                if (passkeyInput.value === correctPasskey) {
+                    showToast("Passkey verified successfully!", "success");
+                    fingerprintScanned = true;
+                    fingerprintStatus.innerText = "Passkey Verified ✅";
+                    fingerprintStatus.style.color = "green";
+                } else if (passkeyInput.value.length > 0) {
+                    fingerprintStatus.innerText = "Incorrect Passkey ❌";
+                    fingerprintStatus.style.color = "red";
+                }
+                toggleConfirmOrderButton();
+            });
+
+            // Prevent form submission if authentication fails
+            form.addEventListener("submit", function (event) {
+                if (!fingerprintScanned) {
+                    event.preventDefault();
+                    showToast("Authentication required to confirm order!", "error");
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>

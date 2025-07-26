@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create an Account</title>
+    <style>
+        body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+.container {
+    background: white;
+    padding: 20px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    width: 350px;
+    text-align: center;
+}
+
+h2 {
+    margin-bottom: 15px;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+}
+
+label {
+    text-align: left;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.required {
+    color: red;
+}
+
+input {
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+button {
+    padding: 10px;
+    background: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    border-radius: 5px;
+    margin-top: 10px;
+}
+
+button:disabled {
+    background: gray;
+    cursor: not-allowed;
+}
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Create an Account</h2>
+
+        <form id="registrationForm" action="register_fingerprint.php" method="POST">
+            <label for="name">Full Name <span class="required">*</span></label>
+            <input type="text" id="name" name="name" required>
+
+            <label for="email">Email <span class="required">*</span></label>
+            <input type="email" id="email" name="email" required>
+
+            <label for="phone">Phone Number <span class="required">*</span></label>
+            <input type="tel" id="phone" name="phone" required>
+
+            <label for="dob">Date of Birth <span class="required">*</span></label>
+            <input type="date" id="dob" name="dob" required>
+
+            <label for="password">Password <span class="required">*</span></label>
+            <input type="password" id="password" name="password" required>
+
+            <label>Fingerprint Scan <span class="required">*</span></label>
+            <input type="hidden" id="fingerprintData" name="fingerprintData">
+            <button type="button" id="scanFingerprint">Scan Fingerprint</button>
+            <p id="fingerprintStatus">Not Scanned</p>
+
+            <button type="submit" id="createAccount" disabled>Create Account</button>
+        </form>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+    const dobInput = document.getElementById("dob");
+    const fingerprintBtn = document.getElementById("scanFingerprint");
+    const fingerprintStatus = document.getElementById("fingerprintStatus");
+    const createAccountBtn = document.getElementById("createAccount");
+    const fingerprintDataInput = document.getElementById("fingerprintData");
+
+    let fingerprintScanned = false;
+
+    // Age restriction check
+    dobInput.addEventListener("change", function () {
+        const dob = new Date(dobInput.value);
+        const today = new Date();
+        const age = today.getFullYear() - dob.getFullYear();
+
+        if (age >= 20) {
+            dobInput.style.border = "1px solid green";
+        } else {
+            dobInput.style.border = "1px solid red";
+            alert("You must be at least 20 years old to create an account.");
+        }
+
+        toggleCreateAccountButton();
+    });
+
+    // Fingerprint scan using WebAuthn API
+    fingerprintBtn.addEventListener("click", async function () {
+        if (!window.PublicKeyCredential) {
+            alert("Fingerprint authentication is not supported on this device.");
+            return;
+        }
+
+        try {
+            const credential = await navigator.credentials.create({
+                publicKey: {
+                    challenge: new Uint8Array(32),
+                    rp: { name: "E-Commerce Site" },
+                    user: { id: new Uint8Array(16), name: "user@example.com", displayName: "User" },
+                    pubKeyCredParams: [{ alg: -7, type: "public-key" }],
+                    authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required" },
+                    timeout: 60000,
+                },
+            });
+
+            if (credential) {
+                fingerprintScanned = true;
+                fingerprintStatus.innerText = "Fingerprint Scanned ✅";
+                fingerprintStatus.style.color = "green";
+
+                fingerprintDataInput.value = btoa(JSON.stringify(credential));
+            }
+        } catch (error) {
+            fingerprintStatus.innerText = "Fingerprint Scan Failed ❌";
+            fingerprintStatus.style.color = "red";
+            fingerprintScanned = false;
+        }
+
+        toggleCreateAccountButton();
+    });
+
+    function toggleCreateAccountButton() {
+        const ageValid = dobInput.style.border === "1px solid green";
+        createAccountBtn.disabled = !(ageValid && fingerprintScanned);
+    }
+});
+    </script>
+
+</body>
+</html>
